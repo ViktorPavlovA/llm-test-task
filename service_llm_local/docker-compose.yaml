@@ -1,0 +1,36 @@
+services:
+  llm:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        LLAMA_CPP_TAG: v0.8.0
+        CUDA_ARCHITECTURES: ${CUDA_ARCHITECTURES:-}
+    container_name: local_llama_server
+    ports:
+      - "8686:8686"
+    volumes:
+      # Writable so a missing GGUF can be fetched into ./models.
+      - ./models:/models
+      - ./main.py:/app/main.py:ro
+    # Host GPU 0 only. Inside the container that card is CUDA device 0.
+    gpus:
+      - driver: nvidia
+        device_ids: ["0"]
+        capabilities: [gpu]
+    environment:
+      NVIDIA_VISIBLE_DEVICES: "0"
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+      HOST: "0.0.0.0"
+      PORT: "8686"
+      MODEL_CONFIG: /models/config.yaml
+      ALLOW_CPU: "0"
+    ipc: host
+    shm_size: "2gb"
+    stop_grace_period: 20s
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:8686/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 180s

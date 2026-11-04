@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Черновик карточки прибора</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Serif:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #efe6d2;
+      --sheet: #f7f1e3;
+      --ink: #1e2a24;
+      --muted: #5c675f;
+      --rule: #c9bda3;
+      --stamp: #9e2b2b;
+      --stamp-soft: #f3d8d2;
+      --ok: #215c45;
+      --ok-soft: #d5e7dc;
+      --warn: #8a5a12;
+      --warn-soft: #f3e4c4;
+      --focus: #1e2a24;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(30,42,36,.05) 1px, transparent 1px),
+        linear-gradient(rgba(30,42,36,.05) 1px, transparent 1px),
+        var(--paper);
+      background-size: 24px 24px, 24px 24px, auto;
+      line-height: 1.45;
+    }
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 64px;
+    }
+    header.mast {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: center;
+      border-bottom: 2px solid var(--ink);
+      padding-bottom: 16px;
+      margin-bottom: 22px;
+    }
+    .mast h1 {
+      font-family: "IBM Plex Serif", Georgia, serif;
+      font-size: 1.85rem;
+      font-weight: 600;
+      margin: 0;
+      letter-spacing: -0.02em;
+      text-align: center;
+      grid-column: 1 / -1;
+      grid-row: 1;
+    }
+    .status {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.78rem;
+      border: 1px solid var(--ink);
+      padding: 8px 10px;
+      background: var(--sheet);
+      min-width: 11rem;
+      grid-column: 2;
+      grid-row: 1;
+      justify-self: end;
+      z-index: 1;
+    }
+    .status b { display: block; font-weight: 500; }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+      gap: 18px;
+    }
+    .panel {
+      background: var(--sheet);
+      border: 1px solid var(--ink);
+      padding: 18px 18px 20px;
+      box-shadow: 6px 6px 0 rgba(30, 42, 36, 0.08);
+      min-width: 0;
+      overflow-x: hidden;
+    }
+    .panel h2 {
+      margin: 0 0 14px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 8px;
+    }
+    label { display: block; font-size: 0.9rem; font-weight: 500; margin: 12px 0 6px; }
+    input, textarea {
+      width: 100%;
+      font: inherit;
+      color: var(--ink);
+      background: #fffdf7;
+      border: 1px solid var(--rule);
+      padding: 8px 10px;
+    }
+    textarea { min-height: 96px; resize: vertical; }
+    textarea.specs { min-height: 140px; font-family: "IBM Plex Mono", monospace; font-size: 0.85rem; }
+    input:focus, textarea:focus, button:focus-visible {
+      outline: 2px solid var(--focus);
+      outline-offset: 2px;
+    }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    button {
+      font: inherit;
+      font-weight: 600;
+      border: 1px solid var(--ink);
+      background: var(--ink);
+      color: var(--sheet);
+      padding: 9px 14px;
+      cursor: pointer;
+    }
+    button.ghost {
+      background: transparent;
+      color: var(--ink);
+    }
+    button:disabled { opacity: 0.55; cursor: wait; }
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+    }
+    .title {
+      font-family: "IBM Plex Serif", Georgia, serif;
+      font-size: 1.35rem;
+      margin: 0 0 8px;
+      overflow-wrap: anywhere;
+    }
+    .meta { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; color: var(--muted); }
+    .block { margin: 14px 0; }
+    .block h3 { margin: 0 0 6px; font-size: 0.82rem; font-weight: 600; color: var(--muted); }
+    ul { margin: 0; padding-left: 1.15rem; }
+    .missing, .notes, .error, .empty {
+      padding: 10px 12px;
+      margin-top: 12px;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      max-width: 100%;
+    }
+    .source-list {
+      margin: 8px 0 0;
+      padding-left: 1.15rem;
+      max-width: 100%;
+    }
+    .source-list li {
+      margin: 4px 0;
+    }
+    .source-list a {
+      color: inherit;
+      overflow-wrap: anywhere;
+      word-break: break-all;
+    }
+    .missing { background: var(--warn-soft); border-left: 4px solid var(--warn); }
+    .notes { background: var(--ok-soft); border-left: 4px solid var(--ok); }
+    .error { background: var(--stamp-soft); border-left: 4px solid var(--stamp); }
+    .empty { color: var(--muted); border: 1px dashed var(--rule); }
+    .copy-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.8rem;
+      background: #fffdf7;
+      border: 1px solid var(--rule);
+      padding: 10px;
+      max-height: 220px;
+      overflow: auto;
+    }
+    .hidden { display: none; }
+    @media (max-width: 860px) {
+      header.mast, .layout, .row { grid-template-columns: 1fr; }
+      .mast h1, .status { grid-column: auto; grid-row: auto; }
+      .status { min-width: 0; justify-self: stretch; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="mast">
+      <h1>Черновик карточки прибора</h1>
+      <div class="status" id="llm-status" aria-live="polite">
+        <b>LLM</b>
+        <span>проверяю…</span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <section class="panel" aria-labelledby="in-title">
+        <h2 id="in-title">Исходные данные</h2>
+        <form id="card-form">
+          <div class="row">
+            <div>
+              <label for="name">Название</label>
+              <input id="name" name="name" required maxlength="200" autocomplete="off">
+            </div>
+            <div>
+              <label for="manufacturer">Производитель</label>
+              <input id="manufacturer" name="manufacturer" maxlength="150" autocomplete="organization">
+            </div>
+          </div>
+          <label for="description">Описание или фрагмент паспорта</label>
+          <textarea id="description" name="description" maxlength="5000"></textarea>
+          <label for="specs">Характеристики JSON</label>
+          <textarea id="specs" class="specs" spellcheck="false">{
+  "диапазон измерений": "",
+  "класс точности": ""
+}</textarea>
+          <label for="raw-json">Или вставьте весь JSON товара</label>
+          <textarea id="raw-json" class="specs" placeholder='{"name": "...", "manufacturer": "...", "specs": {}, "description": "..."}'></textarea>
+          <div class="actions">
+            <button type="submit" id="submit-btn">Собрать карточку</button>
+            <button type="button" class="ghost" id="example-1">Пример 1</button>
+            <button type="button" class="ghost" id="example-2">Пример 2</button>
+            <button type="button" class="ghost" id="apply-json">Разобрать JSON</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel" aria-labelledby="out-title" aria-live="polite">
+        <h2 id="out-title">Черновик</h2>
+        <div id="empty" class="empty">Заполните данные слева или возьмите пример. Результат появится здесь: заголовок, описание, характеристики, запросы и блок для менеджера.</div>
+        <div id="error" class="error hidden"></div>
+        <article id="result" class="hidden">
+          <div class="card-head">
+            <h3 class="title" id="res-title"></h3>
+            <span class="meta" id="res-count"></span>
+          </div>
+          <div class="block">
+            <h3>SEO-описание</h3>
+            <p id="res-description"></p>
+          </div>
+          <div class="block">
+            <h3>Ключевые характеристики</h3>
+            <ul id="res-specs"></ul>
+          </div>
+          <div class="block">
+            <h3>Поисковые запросы</h3>
+            <ul id="res-queries"></ul>
+          </div>
+          <div class="block">
+            <h3>Для менеджера</h3>
+            <p id="res-commercial"></p>
+          </div>
+          <div id="res-missing" class="missing hidden"></div>
+          <div id="res-sources" class="notes hidden"></div>
+          <div id="res-notes" class="notes hidden"></div>
+          <div class="copy-bar">
+            <button type="button" class="ghost" id="copy-json">Копировать JSON</button>
+            <button type="button" class="ghost" id="copy-md">Копировать Markdown</button>
+          </div>
+          <div class="block">
+            <h3>Markdown</h3>
+            <pre id="res-md"></pre>
+          </div>
+        </article>
+      </section>
+    </div>
+  </div>
+  <script>
+    const EXAMPLES = {
+      1: {
+        name: "Манометр показывающий DM 02",
+        manufacturer: "Манотомь",
+        specs: {
+          "диапазон измерений": "0–1,6 МПа",
+          "класс точности": "1,5",
+          "присоединение": "G1/2",
+          "диаметр корпуса": "100 мм"
+        },
+        description: "Прибор предназначен для измерения избыточного давления неагрессивных жидкостей, пара и газа. Применяется в теплоснабжении, водоснабжении и промышленном оборудовании."
+      },
+      2: {
+        name: "Преобразователь давления ПД100-ДИ0.25-1",
+        manufacturer: "ОВЕН",
+        specs: {
+          "тип измеряемого давления": "избыточное (ДИ)",
+          "верхний предел измерений": "0.25 МПа",
+          "выходной сигнал": "4…20 мА",
+          "основная приведённая погрешность": "1,0 % ВПИ",
+          "степень защиты": "IP65",
+          "напряжение питания": "12…36 В",
+          "температура измеряемой среды": "от −40 до +100 °C",
+          "присоединительная резьба": "G1/2"
+        },
+        description: "Микропроцессорный преобразователь давления с выходным сигналом 4–20 мА. Предназначен для непрерывного измерения избыточного давления жидкостей, пара и газов в системах автоматизации и ЖКХ."
+      }
+    };
+
+    const form = document.getElementById("card-form");
+    const submitBtn = document.getElementById("submit-btn");
+    let lastCard = null;
+
+    function fillForm(data) {
+      document.getElementById("name").value = data.name || "";
+      document.getElementById("manufacturer").value = data.manufacturer || "";
+      document.getElementById("description").value = data.description || "";
+      document.getElementById("specs").value = JSON.stringify(data.specs || {}, null, 2);
+      document.getElementById("raw-json").value = JSON.stringify(data, null, 2);
+    }
+
+    function parseSpecs() {
+      const raw = document.getElementById("specs").value.trim();
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+        throw new Error("specs должен быть JSON-объектом");
+      }
+      return parsed;
+    }
+
+    function nonemptySpecs(value) {
+      const cleaned = {};
+      if (!value || typeof value !== "object" || Array.isArray(value)) {
+        return cleaned;
+      }
+      for (const [key, raw] of Object.entries(value)) {
+        const label = String(key).trim();
+        if (!label) continue;
+        if (raw === null || raw === undefined) continue;
+        if (typeof raw === "string" && !raw.trim()) continue;
+        cleaned[label] = raw;
+      }
+      return cleaned;
+    }
+
+    function payloadFromForm() {
+      const raw = document.getElementById("raw-json").value.trim();
+      let base = {};
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+          throw new Error("JSON товара должен быть объектом");
+        }
+        base = parsed;
+      }
+      const fromFields = {
+        name: document.getElementById("name").value.trim(),
+        manufacturer: document.getElementById("manufacturer").value.trim(),
+        description: document.getElementById("description").value.trim(),
+        specs: nonemptySpecs(parseSpecs())
+      };
+      const specs = {
+        ...nonemptySpecs(base.specs),
+        ...fromFields.specs
+      };
+      return {
+        name: fromFields.name || String(base.name || "").trim(),
+        manufacturer: fromFields.manufacturer || base.manufacturer || null,
+        description: fromFields.description || base.description || base.additional_info || null,
+        type: base.type || null,
+        model: base.model || null,
+        specs
+      };
+    }
+
+    function setHidden(id, hidden) {
+      document.getElementById(id).classList.toggle("hidden", hidden);
+    }
+
+    function extractUrl(item) {
+      const match = String(item).match(/https?:\/\/[^\s]+/i);
+      return match ? match[0].replace(/[),.;]+$/, "") : "";
+    }
+
+    function renderSources(card) {
+      const box = document.getElementById("res-sources");
+      box.replaceChildren();
+      if (!card.web_used) {
+        box.classList.add("hidden");
+        return;
+      }
+      const heading = document.createElement("strong");
+      heading.textContent = "Источники поиска";
+      box.appendChild(heading);
+      const items = card.sources || [];
+      if (!items.length) {
+        const p = document.createElement("p");
+        p.textContent = "Поиск в интернете выполнялся, подтверждённых страниц нет.";
+        p.style.margin = "8px 0 0";
+        box.appendChild(p);
+        box.classList.remove("hidden");
+        return;
+      }
+      const ul = document.createElement("ul");
+      ul.className = "source-list";
+      for (const item of items) {
+        const li = document.createElement("li");
+        const url = extractUrl(item);
+        if (url) {
+          const a = document.createElement("a");
+          a.href = url;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          a.textContent = item;
+          li.appendChild(a);
+        } else {
+          li.textContent = item;
+        }
+        ul.appendChild(li);
+      }
+      box.appendChild(ul);
+      box.classList.remove("hidden");
+    }
+
+    function fillList(id, items) {
+      const ul = document.getElementById(id);
+      ul.replaceChildren();
+      for (const item of items) {
+        const li = document.createElement("li");
+        li.textContent = item;
+        ul.appendChild(li);
+      }
+    }
+
+    function renderCard(card) {
+      lastCard = card;
+      document.getElementById("res-title").textContent = card.title;
+      document.getElementById("res-description").textContent = card.description;
+      document.getElementById("res-count").textContent = card.description.length + " символов";
+      document.getElementById("res-commercial").textContent = card.commercial_block;
+      document.getElementById("res-md").textContent = card.markdown;
+      fillList("res-specs", card.key_specs);
+      fillList("res-queries", card.search_queries);
+      const missing = document.getElementById("res-missing");
+      if (card.data_missing && card.data_missing.length) {
+        missing.textContent = "Нужно уточнить: " + card.data_missing.join(", ");
+        missing.classList.remove("hidden");
+      } else {
+        missing.classList.add("hidden");
+      }
+      renderSources(card);
+      const notes = document.getElementById("res-notes");
+      if (card.review_notes && card.review_notes.length) {
+        notes.textContent = card.review_notes.join(" ");
+        notes.classList.remove("hidden");
+      } else {
+        notes.classList.add("hidden");
+      }
+      setHidden("empty", true);
+      setHidden("error", true);
+      setHidden("result", false);
+    }
+
+    function showError(message) {
+      const box = document.getElementById("error");
+      box.textContent = message;
+      setHidden("error", false);
+      setHidden("empty", true);
+      setHidden("result", true);
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      setHidden("error", true);
+      submitBtn.disabled = true;
+      try {
+        const payload = payloadFromForm();
+        const response = await fetch("/api/description", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          const detail = typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail || body);
+          throw new Error(detail || "Сервис не смог собрать карточку");
+        }
+        renderCard(body);
+      } catch (err) {
+        showError(err.message || String(err));
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    document.getElementById("example-1").addEventListener("click", () => fillForm(EXAMPLES[1]));
+    document.getElementById("example-2").addEventListener("click", () => fillForm(EXAMPLES[2]));
+    document.getElementById("apply-json").addEventListener("click", () => {
+      try {
+        const parsed = JSON.parse(document.getElementById("raw-json").value);
+        fillForm(parsed);
+      } catch (err) {
+        showError("Не получилось разобрать JSON: " + err.message);
+      }
+    });
+
+    async function copyText(text) {
+      await navigator.clipboard.writeText(text);
+    }
+    document.getElementById("copy-json").addEventListener("click", async () => {
+      if (lastCard) await copyText(JSON.stringify(lastCard, null, 2));
+    });
+    document.getElementById("copy-md").addEventListener("click", async () => {
+      if (lastCard) await copyText(lastCard.markdown);
+    });
+
+    form.addEventListener("keydown", (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        form.requestSubmit();
+      }
+    });
+
+    fetch("/health")
+      .then((r) => r.json())
+      .then((data) => {
+        const box = document.getElementById("llm-status");
+        const ok = data.llm && data.llm.ok;
+        box.innerHTML = "<b>LLM</b><span>" + (ok ? "на связи, порт 8686" : "недоступна — поднимите service_llm_local") + "</span>";
+      })
+      .catch(() => {
+        document.getElementById("llm-status").innerHTML = "<b>LLM</b><span>статус неизвестен</span>";
+      });
+  </script>
+</body>
+</html>

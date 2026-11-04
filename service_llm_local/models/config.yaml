@@ -1,0 +1,22 @@
+model_path: Qwen3.5-4B-UD-Q4_K_XL.gguf
+
+context_length: 16384
+chat_format: auto
+flash_attn: auto
+n_gpu_layers: auto
+alias: local-llm
+jinja: true
+
+reasoning: "off"
+reasoning_budget: 0
+reasoning_format: deepseek
+chat_template_kwargs:
+  enable_thinking: false
+
+
+split_mode: none
+main_gpu: 0
+
+extra_args:
+  - --parallel
+  - "1"
